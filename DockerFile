@@ -1,0 +1,36 @@
+FROM ubuntu:20.04
+
+WORKDIR /var/www/html
+
+COPY . /var/www/html
+
+RUN apt update
+
+RUN apt install -y nginx
+
+RUN ufw app list
+
+RUN ufw allow 'Nginx HTTP'
+
+RUN ufw status
+
+RUN systemctl status nginx
+
+RUN cd /var/www/html && echo "" > index.nginx-debian.html
+
+COPY index.html index.nginx-debian.html
+
+RUN apt install -y jq curl wget unzip \
+    && apt install -y net-tools iputils-ping dnsutils
+
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip \
+    && ./aws/install
+
+RUN aws --version
+
+# Copy SSL certificates to the appropriate location
+COPY . tls.cert /etc/nginx/conf.d/tls.cert/
+COPY . tls.key /etc/nginx/conf.d/tls.key/
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
